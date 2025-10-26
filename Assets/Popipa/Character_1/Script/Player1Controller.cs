@@ -2,143 +2,99 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(BoxCollider2D))]
-public class Player1Controller : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
-    [Header("Components")]
-    public Animator anim;
-    private Rigidbody2D rb;
-
     [Header("Movement Settings")]
-    public float walkSpeed = 4f;
-    public float runSpeed = 7f;
-    public float jumpForce = 12f;
+    public float moveSpeed = 5f;
+    public float runMultiplier = 1.5f;
+    public float jumpForce = 15f;
 
     [Header("Ground Check")]
     public Transform groundCheck;
-    public float groundCheckRadius = 0.15f;
+    public float groundRadius = 0.15f;
     public LayerMask groundLayer;
-    private bool isGrounded;
 
+    [Header("Animation")]
+    public Animator anim;
+
+    private Rigidbody2D rb;
     private bool facingRight = true;
-    private bool isRunning;
-    private bool jumpQueued;
+    private bool isGrounded;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.freezeRotation = true; // Prevents tipping over
+        rb.freezeRotation = true;
     }
 
     void Update()
     {
-        // Queue jump input for physics step
-        if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
-            jumpQueued = true;
+        // Ground check
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, groundLayer);
 
-        HandleAnimations();
+        // Jump
+        if (Input.GetButtonDown("Jump") && isGrounded)
+        {
+            Jump();
+        }
+
+        // Animation updates
+        anim.SetBool("Jump", !isGrounded);
+        anim.SetFloat("Speed", Mathf.Abs(rb.linearVelocity.x));
+
+        // Attack example (optional)
+        if (Input.GetMouseButtonDown(0))
+        {
+            anim.SetTrigger("Attack");
+        }
     }
 
     void FixedUpdate()
     {
-        HandleMovement();
-        HandleJump();
-
-        Debug.Log("RB velocity: " + rb.linearVelocity);
+        Move();
     }
 
-    void HandleMovement()
+    void Move()
     {
-        float moveInput = 0f;
+        float inputX = Input.GetAxisRaw("Horizontal");
+        bool isRunning = (Input.GetKey(KeyCode.LeftShift) && Mathf.Abs(inputX) > 0); // Shift + A/D
 
-        // --- MOVEMENT INPUTS ---
-        if (Input.GetKey(KeyCode.A))
-        {
-            moveInput = -1f;
-            isRunning = Input.GetKey(KeyCode.LeftShift);
-        }
-        else if (Input.GetKey(KeyCode.D))
-        {
-            moveInput = 1f;
-            isRunning = Input.GetKey(KeyCode.LeftShift);
-        }
-        else
-        {
-            isRunning = false;
-        }
+        float speed = moveSpeed;
+        if (isRunning)
+            speed *= runMultiplier;
 
-        // --- APPLY MOVEMENT ---
-        float targetSpeed = isRunning ? runSpeed : walkSpeed;
-        rb.linearVelocity = new Vector2(moveInput * targetSpeed, rb.linearVelocity.y);
+        rb.linearVelocity = new Vector2(inputX * speed, rb.linearVelocity.y);
 
-        // --- FLIP SPRITE ---
-        if (moveInput > 0 && !facingRight)
+        // Flip sprite
+        if (inputX > 0 && !facingRight)
             Flip();
-        else if (moveInput < 0 && facingRight)
+        else if (inputX < 0 && facingRight)
             Flip();
+
+        // Update animation states
+        anim.SetBool("Walk", Mathf.Abs(inputX) > 0.1f && !isRunning && isGrounded);
+        anim.SetBool("Run", isRunning && isGrounded);
     }
 
-    void HandleJump()
+    void Jump()
     {
-        // --- EXECUTE JUMP ---
-        if (jumpQueued && IsGrounded())
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            anim?.SetBool("Jump", true);
-            jumpQueued = false;
-        }
-
-        // --- RESET JUMP WHEN GROUNDED ---
-        if (IsGrounded())
-            anim?.SetBool("Jump", false);
-    }
-
-    bool IsGrounded()
-    {
-        // Simple circle overlap at feet
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-        return isGrounded;
-    }
-
-    void HandleAnimations()
-    {
-        bool movingHorizontally = Mathf.Abs(rb.linearVelocity.x) > 0.05f;
-
-        if (movingHorizontally && !isRunning)
-        {
-            anim?.SetBool("Walk", true);
-            anim?.SetBool("Run", false);
-        }
-        else if (movingHorizontally && isRunning)
-        {
-            anim?.SetBool("Run", true);
-            anim?.SetBool("Walk", false);
-        }
-        else
-        {
-            anim?.SetBool("Walk", false);
-            anim?.SetBool("Run", false);
-        }
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
     }
 
     void Flip()
     {
         facingRight = !facingRight;
-        Vector3 s = transform.localScale;
-        s.x *= -1;
-        transform.localScale = s;
+        Vector3 scale = transform.localScale;
+        scale.x *= -1;
+        transform.localScale = scale;
     }
 
-    // Optional animation helpers
-    public void Dead(bool state) => anim?.SetBool("Dead", state);
-    public void Attack(bool state) => anim?.SetBool("Attack", state);
-
-    // Debug Gizmo for ground check
     void OnDrawGizmosSelected()
     {
         if (groundCheck)
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+            Gizmos.DrawWireSphere(groundCheck.position, groundRadius);
         }
     }
 }
