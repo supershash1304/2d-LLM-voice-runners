@@ -11,13 +11,13 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
+  - BACKGROUND
+  - FOREGROUND
   - Coins
   - Obstacle
   - Powerup
-  - 
-  - 
+  - Player
+  - grid
   - 
   - 
   - 
@@ -40,6 +40,21 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: background
+    uniqueID: 3708378883
+    locked: 0
+  - name: FOREGROUND
+    uniqueID: 3013612255
+    locked: 0
+  - name: grid
+    uniqueID: 1033793781
+    locked: 0
+  - name: player
+    uniqueID: 2822687417
+    locked: 0
+  - name: ui
+    uniqueID: 2029454717
     locked: 0
   m_RenderingLayers:
   - Default
