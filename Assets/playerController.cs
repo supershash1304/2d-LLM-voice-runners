@@ -23,7 +23,7 @@ public class PlayerController : MonoBehaviour
 
         // Null checks for safety
         if (rb2d == null) Debug.LogError("Rigidbody2D component missing!");
-        if (animator == null) Debug.LogError("Animator component missing!");
+        
 
         // Set the IsRunning boolean to true immediately in Start() 
         if (animator != null)
