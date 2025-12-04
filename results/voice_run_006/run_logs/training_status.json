@@ -1,0 +1,29 @@
+{
+    "VoiceRLAgent": {
+        "checkpoints": [
+            {
+                "steps": 83584,
+                "file_path": "results/voice_run_006/VoiceRLAgent/VoiceRLAgent-83584.onnx",
+                "reward": null,
+                "creation_time": 1764806612.4346292,
+                "auxillary_file_paths": [
+                    "results/voice_run_006/VoiceRLAgent/VoiceRLAgent-83584.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 83584,
+            "file_path": "results/voice_run_006/VoiceRLAgent.onnx",
+            "reward": null,
+            "creation_time": 1764806612.4346292,
+            "auxillary_file_paths": [
+                "results/voice_run_006/VoiceRLAgent/VoiceRLAgent-83584.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.30.0",
+        "torch_version": "1.11.0"
+    }
+}

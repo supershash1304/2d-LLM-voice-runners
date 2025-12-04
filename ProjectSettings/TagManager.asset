@@ -4,7 +4,7 @@
 TagManager:
   serializedVersion: 3
   tags:
-  - Ground
+  - Despawn
   layers:
   - Default
   - TransparentFX
@@ -12,14 +12,14 @@ TagManager:
   - 
   - Water
   - UI
-  - BACKGROUND
-  - FOREGROUND
-  - Coins
-  - Obstacle
-  - Powerup
+  - Ground
+  - Background
   - Player
-  - grid
-  - ground
+  - Obstacle
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 
@@ -42,27 +42,17 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: background
-    uniqueID: 3708378883
+  - name: Player
+    uniqueID: 405679029
     locked: 0
-  - name: FOREGROUND
-    uniqueID: 3013612255
+  - name: Ground
+    uniqueID: 3300609679
     locked: 0
-  - name: grid
-    uniqueID: 1033793781
+  - name: Background
+    uniqueID: 854852253
     locked: 0
-  - name: player
-    uniqueID: 2822687417
-    locked: 0
-  - name: ui
-    uniqueID: 2029454717
+  - name: Obstacle
+    uniqueID: 588190895
     locked: 0
   m_RenderingLayers:
   - Default
-  - Light Layer 1
-  - Light Layer 2
-  - Light Layer 3
-  - Light Layer 4
-  - Light Layer 5
-  - Light Layer 6
-  - Light Layer 7

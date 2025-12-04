@@ -1,0 +1,42 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1764797027",
+        "python_version": "3.9.6 (default, Apr 30 2025, 02:07:17) \n[Clang 17.0.0 (clang-1700.0.13.5)]",
+        "command_line_arguments": "/Users/shashwatchandwadkar/Library/Python/3.9/bin/mlagents-learn ./voice_rl_config.yaml --run-id=voice_run_002 --train",
+        "mlagents_version": "0.30.0",
+        "mlagents_envs_version": "0.30.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.11.0",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1764797087"
+    },
+    "total": 60.658442832999995,
+    "count": 1,
+    "self": 0.04153512499998868,
+    "children": {
+        "run_training.setup": {
+            "total": 0.021174374999999968,
+            "count": 1,
+            "self": 0.021174374999999968
+        },
+        "TrainerController.start_learning": {
+            "total": 60.595733333000005,
+            "count": 1,
+            "self": 0.0045704160000070715,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 60.589698792,
+                    "count": 1,
+                    "self": 60.589698792
+                },
+                "TrainerController._save_models": {
+                    "total": 0.001464124999998262,
+                    "count": 1,
+                    "self": 0.001464124999998262
+                }
+            }
+        }
+    }
+}

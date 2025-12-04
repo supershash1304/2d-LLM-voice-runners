@@ -1,16 +1,13 @@
 using UnityEngine;
 
-public class ParallaxLayer : MonoBehaviour
+namespace EndlessRunner.Parallax
 {
-    public float speed = 0.2f;
-    public Transform player;
-
-    void Update()
+    [System.Serializable]
+    public class ParallaxLayer
     {
-        transform.position = new Vector3(
-            player.position.x * speed,
-            transform.position.y,
-            transform.position.z
-        );
+        public ParallaxLayerType parallaxLayerType;
+        public ParallaxEffect parallaxEffectPrefab;
+        public float moveSpeed;
+        public float offset;
     }
 }

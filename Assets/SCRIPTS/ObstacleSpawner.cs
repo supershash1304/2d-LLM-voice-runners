@@ -1,34 +1,86 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ObstacleSpawner : MonoBehaviour
+namespace EndlessRunner.Obstacle
 {
-    public GameObject obstaclePrefab;
-    public Transform player;
-    public float minDist = 10f;
-    public float maxDist = 20f;
-
-    private float nextX;
-
-    void Start()
+    public class ObstacleSpawner
     {
-        nextX = player.position.x + 15f;
-    }
+        private ObstacleManager obstacleManager;
+        private Coroutine spawnRoutine;
 
-    void Update()
-    {
-        if (player.position.x > nextX - 25)
+        // RL support: track active obstacles
+        private readonly List<ObstacleController> activeObstacles = new List<ObstacleController>();
+
+        public ObstacleSpawner(ObstacleManager obstacleManager)
         {
-            SpawnObstacle();
+            this.obstacleManager = obstacleManager;
         }
-    }
 
-    void SpawnObstacle()
-    {
-        float x = nextX;
-        float y = transform.position.y;
+        public void StartSpawning()
+        {
+            spawnRoutine = obstacleManager.StartCoroutine(StartSpawner());
+        }
 
-        Instantiate(obstaclePrefab, new Vector3(x, y, 0), Quaternion.identity);
+        public void StopSpawning()
+        {
+            if (spawnRoutine != null)
+                obstacleManager.StopCoroutine(spawnRoutine);
+        }
 
-        nextX += Random.Range(minDist, maxDist);
+        private IEnumerator StartSpawner()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(obstacleManager.GetData().ObstacleSpawnTime);
+
+                ObstacleController controller = obstacleManager.GetPool().GetObstacle();
+                if (controller != null)
+                {
+                    Vector3[] spawnPositions = obstacleManager.GetData().SpawnPositions;
+                    Vector3 spawnPos = spawnPositions[Random.Range(0, spawnPositions.Length)];
+
+                    controller.Activate(spawnPos);
+                    RegisterObstacle(controller);
+                }
+            }
+        }
+
+        // RL tracking
+        public void RegisterObstacle(ObstacleController obstacle)
+        {
+            if (!activeObstacles.Contains(obstacle))
+            {
+                activeObstacles.Add(obstacle);
+                obstacle.OnObstacleDeactivate += UnregisterObstacle;
+            }
+        }
+
+        public void UnregisterObstacle(ObstacleController obstacle)
+        {
+            if (activeObstacles.Contains(obstacle))
+            {
+                activeObstacles.Remove(obstacle);
+                obstacle.OnObstacleDeactivate -= UnregisterObstacle;
+            }
+        }
+
+        // Optional: distance to next obstacle (if you want to feed RL)
+        public float GetDistanceToNextObstacle(float playerX)
+        {
+            float closest = float.MaxValue;
+
+            foreach (var obstacle in activeObstacles)
+            {
+                if (obstacle == null || !obstacle.IsActive)
+                    continue;
+
+                float dx = obstacle.transform.position.x - playerX;
+                if (dx > 0f && dx < closest)
+                    closest = dx;
+            }
+
+            return closest == float.MaxValue ? 20f : closest;
+        }
     }
 }
