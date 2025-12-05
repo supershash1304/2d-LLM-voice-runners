@@ -1,79 +1,63 @@
-using EndlessRunner.Data;
 using UnityEngine;
+using EndlessRunner.Data;
 
 namespace EndlessRunner.Player
 {
     public class PlayerControllerVoice : PlayerController
     {
-        private PlayerModelVoice modelVoice;
         private PlayerView voiceView;
 
-        public PlayerControllerVoice(PlayerData data, PlayerManager manager)
-            : base(data, manager) {}
+        // ⭐ Required for PlayerCoordinator
+        public PlayerControllerVoiceMB VoiceMB { get; private set; }
+
+        public PlayerControllerVoice(PlayerData data, PlayerManager mgr)
+            : base(data, mgr) { }
 
         public override void InitializeController()
         {
-            modelVoice = new PlayerModelVoice(playerData, this);
+            // Spawn Player2 object
+            voiceView = Object.Instantiate(
+                playerData.Player2Prefab,
+                playerData.Player2SpawnPosition,
+                Quaternion.identity
+            );
 
-            voiceView = Object.Instantiate(playerData.Player2Prefab,
-                                           playerData.Player2SpawnPosition,
-                                           Quaternion.identity);
-
+            // Initialize view (assign data)
             voiceView.InitializeView(playerData, this);
-            modelVoice.InitializeModel();
+
+            // MB is already on prefab — OR add if missing
+            var mb = voiceView.GetComponent<PlayerControllerVoiceMB>();
+            if (mb == null)
+            {
+                mb = voiceView.gameObject.AddComponent<PlayerControllerVoiceMB>();
+                Debug.LogWarning("[P2] Added PlayerControllerVoiceMB at runtime.");
+            }
+
+            // ⭐ Store reference so PlayerCoordinator can access it
+            VoiceMB = mb;
+
+            // Link RL Agent
+            var rl = Object.FindAnyObjectByType<VoiceRLAgent>();
+            if (rl != null)
+            {
+                rl.voiceWrapper = mb;
+                Debug.Log("[P2] RL Agent linked to PlayerControllerVoiceMB!");
+            }
         }
 
         public override void OnUpdate(float dt)
         {
-            bool grounded = voiceView.CheckIfGrounded();
-            modelVoice.SetIsGrounded(grounded);
-
-            // RL decides jump — NOT keyboard
-            modelVoice.ProcessExternalInput(dt);
-
-            if (modelVoice.ShouldApplyJump)
-                voiceView.RequestJump(modelVoice.GetJumpForce);
+            // Player2 is driven by RL & voice; no manual movement
         }
 
-        public void TriggerJump(float jumpMult)
+        public void TriggerJump(float multiplier)
         {
-            modelVoice.ExternalJumpRequested = true;
-            modelVoice.JumpMultiplier = jumpMult;
-        }
-
-        public override void OnHitByObstacle()
-        {
-            base.OnHitByObstacle();
-
-            var rl = GameObject.FindAnyObjectByType<VoiceRLAgent>();
-            if (rl != null)
-            {
-                rl.AddReward(-1f);
-                rl.EndEpisode();
-            }
+            // PlayerModelVoice removed — jump handled by MB
         }
 
         public void ResetForRLTraining()
         {
-            if (voiceView != null)
-            {
-                voiceView.transform.position = playerData.Player2SpawnPosition;
-                voiceView.ResetPhysicsState();
-            }
-
-            modelVoice.ExternalJumpRequested = false;
-            modelVoice.JumpMultiplier = 1f;
-            modelVoice.SetIsGrounded(true);
+            // Reset handled inside MB
         }
-        public void RewardSuccess()
-{
-    var rl = GameObject.FindAnyObjectByType<VoiceRLAgent>();
-    if (rl != null)
-    {
-        rl.AddReward(+0.5f);   // reward for success
-    }
-}
-
-        public PlayerView GetView() => voiceView;
     }
 }

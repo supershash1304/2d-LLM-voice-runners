@@ -18,6 +18,6 @@ MonoBehaviour:
   spawnPositions:
   - {x: 16, y: -2, z: 0}
   - {x: 16, y: -4, z: 0}
-  obstacleSpawnTime: 2.5
-  moveSpeed: 3
+  obstacleSpawnTime: 2
+  moveSpeed: 4
   scoreValue: 1

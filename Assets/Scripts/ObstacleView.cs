@@ -1,9 +1,7 @@
-using UnityEngine;
-using EndlessRunner.Obstacle;     // <-- REQUIRED so ObstacleController is visible
-using EndlessRunner.Player;       // For IPlayer interface
 using EndlessRunner.Common;
+using UnityEngine;
 
-namespace EndlessRunner.Obstacle   // <-- MUST MATCH ObstacleController namespace
+namespace EndlessRunner.Obstacle
 {
     public class ObstacleView : MonoBehaviour
     {
@@ -15,9 +13,9 @@ namespace EndlessRunner.Obstacle   // <-- MUST MATCH ObstacleController namespac
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         }
 
-        public void SetController(ObstacleController controller)
+        public void SetController(ObstacleController obstacleController)
         {
-            obstacleController = controller;
+            this.obstacleController = obstacleController;
         }
 
         public void InitializeView()
@@ -39,13 +37,13 @@ namespace EndlessRunner.Obstacle   // <-- MUST MATCH ObstacleController namespac
         private void Update()
         {
             if (obstacleController != null)
-            {
                 transform.Translate(obstacleController.GetVelocity() * Time.deltaTime);
-            }
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
+            Debug.Log("[OBSTACLE] Hit: " + collision.name);
+
             if (collision.CompareTag("Despawn"))
             {
                 obstacleController.Deactivate();
@@ -53,15 +51,11 @@ namespace EndlessRunner.Obstacle   // <-- MUST MATCH ObstacleController namespac
                 return;
             }
 
-            // Player collision
             IPlayer player = collision.GetComponentInParent<IPlayer>();
             if (player != null)
             {
+                Debug.Log("[OBSTACLE] Player detected via IPlayer: " + player);
                 player.OnHitByObstacle();
-
-                // RL death notification
-                var mb = collision.GetComponentInParent<PlayerControllerVoiceMB>();
-                mb?.NotifyDeath();
             }
         }
     }

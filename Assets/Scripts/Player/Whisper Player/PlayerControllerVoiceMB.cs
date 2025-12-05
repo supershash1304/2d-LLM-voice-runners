@@ -1,44 +1,79 @@
 using UnityEngine;
+using EndlessRunner.Obstacle;
 
 namespace EndlessRunner.Player
 {
+    [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(PlayerView))]
     public class PlayerControllerVoiceMB : MonoBehaviour
     {
-        public PlayerControllerVoice Controller { get; private set; }
         public PlayerView View { get; private set; }
 
-        // Compatibility
-        public PlayerControllerVoice controller => Controller;
+        private Rigidbody2D rb;
+        private Vector3 initialPosition;
 
-        public void Init(PlayerControllerVoice controller, PlayerView view)
+        public float baseJumpForce = 30f;
+        public float minMultiplier = 0.3f;
+        public float maxMultiplier = 1.8f;
+
+        private void Awake()
         {
-            Controller = controller;
-            View = view;
+            rb = GetComponent<Rigidbody2D>();
+            View = GetComponent<PlayerView>();
+            initialPosition = transform.position;
         }
 
+        // 🔥 CALLED BY RL AGENT
         public void TriggerJump(float multiplier)
         {
-            Controller?.TriggerJump(multiplier);
+            Debug.Log($"[MB] TriggerJump called! multiplier={multiplier}");
+
+            if (!View.CheckIfGrounded())
+            {
+                Debug.Log("[MB] Not grounded, cannot jump.");
+                return;
+            }
+
+            float finalForce = baseJumpForce * Mathf.Clamp(multiplier, minMultiplier, maxMultiplier);
+
+            Debug.Log("[MB] Applying jump force: " + finalForce);
+
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+            rb.AddForce(Vector2.up * finalForce, ForceMode2D.Impulse);
         }
 
         public void ResetForRLTraining()
         {
-            Controller?.ResetForRLTraining();
+            rb.linearVelocity = Vector2.zero;
+            transform.position = initialPosition;
         }
 
-        // 🔥 Add this method — required by ObstacleView
-        public void NotifyDeath()
+        private void Update()
         {
-            // Reward the RL Agent if needed
-            var rl = FindObjectOfType<VoiceRLAgent>();
-            if (rl != null)
+            var rl = FindAnyObjectByType<VoiceRLAgent>();
+            if (rl == null) return;
+
+            float dist = CalculateDistanceToNextObstacle();
+            float height = transform.position.y;
+            bool grounded = View.CheckIfGrounded();
+
+            rl.SetEnvironment(dist, height, grounded);
+        }
+
+        private float CalculateDistanceToNextObstacle()
+        {
+            float nearest = float.MaxValue;
+
+            var obstacles = FindObjectsByType<ObstacleView>(FindObjectsSortMode.None);
+
+            foreach (var o in obstacles)
             {
-                rl.AddReward(-1f);   // punishment for death
-                rl.EndEpisode();
+                float diff = o.transform.position.x - transform.position.x;
+                if (diff > 0 && diff < nearest)
+                    nearest = diff;
             }
 
-            // Forward to controller so normal game logic works
-            Controller?.OnHitByObstacle();
+            return nearest == float.MaxValue ? 10f : nearest;
         }
     }
 }

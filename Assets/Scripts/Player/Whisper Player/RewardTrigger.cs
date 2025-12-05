@@ -1,42 +1,29 @@
 using UnityEngine;
+using EndlessRunner.Player;
 
-namespace EndlessRunner.Player
+public class RewardTrigger : MonoBehaviour
 {
-    public class RewardTrigger : MonoBehaviour
+    // SUCCESS trigger
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        private void OnTriggerEnter2D(Collider2D col)
+        var agent = other.GetComponent<VoiceRLAgent>();
+        if (agent != null)
         {
-            var view = col.GetComponent<PlayerView>();
-            if (view == null) return;
+            Debug.Log("SUCCESS");
+            agent.AddReward(+1f);
+            agent.EndEpisode();
+        }
+    }
 
-            var wrapper = view.GetComponent<PlayerControllerVoiceMB>();
-            if (wrapper == null) return;
-
-            var controller = wrapper.Controller;
-            if (controller == null) return;
-
-            float obstacleHeight = transform.position.y;
-            float playerHeight = col.transform.position.y;
-
-            bool playerJumped = playerHeight > 0.5f;  // adjust as needed
-
-            // Ground obstacle (small height)
-            if (obstacleHeight < 1.0f)
-            {
-                if (playerJumped)
-                    controller.RewardSuccess(); // Correct
-                else
-                {
-                    controller.OnHitByObstacle(); // Wrong
-                }
-            }
-            else // High obstacle
-            {
-                if (!playerJumped)
-                    controller.RewardSuccess(); // Correct stay low
-                else
-                    controller.OnHitByObstacle(); // Wrong (jumped into it)
-            }
+    // FAIL collision
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        var agent = other.collider.GetComponent<VoiceRLAgent>();
+        if (agent != null)
+        {
+            Debug.Log("FAIL");
+            agent.AddReward(-1f);
+            agent.EndEpisode();
         }
     }
 }

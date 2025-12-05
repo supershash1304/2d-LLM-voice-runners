@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 using EndlessRunner.Player;
 using EndlessRunner.Common;
 
@@ -8,34 +7,29 @@ public class WhisperVoiceCommands : MonoBehaviour
     public WhisperController whisper;
     public MicrophoneCapture mic;
 
-    private PlayerManager manager;
-    private PlayerControllerVoiceMB voiceMB;
+    public float interval = 1.0f;
 
     private float timer;
-    public float interval = 1.2f;
+    private PlayerManager playerManager;
+    private VoiceRLAgent rlAgent;
 
-    private IEnumerator Start()
+    private void Start()
     {
-        manager = FindAnyObjectByType<PlayerManager>();
+        playerManager = FindAnyObjectByType<PlayerManager>();
 
-        while (manager == null || manager.VoicePlayerMB == null)
-            yield return null;
-
-        voiceMB = manager.VoicePlayerMB;
-
-        Debug.Log("[VOICE] Voice Player connected!");
+        if (playerManager == null)
+            Debug.LogWarning("[VOICE] No PlayerManager found in scene");
     }
 
     private void Update()
     {
-        if (manager == null)
+        if (playerManager == null)
             return;
 
-        if (manager.CurrentGameState != GameState.IN_GAME)
+        if (playerManager.CurrentGameState != GameState.IN_GAME)
             return;
 
         timer += Time.deltaTime;
-
         if (timer >= interval)
         {
             timer = 0f;
@@ -45,29 +39,36 @@ public class WhisperVoiceCommands : MonoBehaviour
 
     private async void ProcessVoice()
     {
-        if (mic == null) return;
+        if (mic == null || whisper == null)
+            return;
 
-        var clip = mic.GetLastSecondClip();
-        if (clip == null) return;
+        if (rlAgent == null)
+            rlAgent = FindAnyObjectByType<VoiceRLAgent>();
 
-        string path = mic.SaveTempWav(clip);
-
-        string result = await whisper.TranscribeAsync(path);
-        if (string.IsNullOrEmpty(result))
+        if (rlAgent == null)
         {
-            Debug.LogWarning("[VOICE] Whisper empty");
+            Debug.LogWarning("[VOICE] No VoiceRLAgent found");
             return;
         }
 
-        result = result.ToLower();
+        var clip = mic.GetLastSecondClip();
+        if (clip == null)
+            return;
 
-        if (result.Contains("short jump"))
-            voiceMB.TriggerJump(0.6f);
-        else if (result.Contains("medium jump"))
-            voiceMB.TriggerJump(1.0f);
-        else if (result.Contains("high jump"))
-            voiceMB.TriggerJump(1.4f);
-        else if (result.Contains("jump"))
-            voiceMB.TriggerJump(1.0f);
+        string path = mic.SaveTempWav(clip);
+        string result = await whisper.TranscribeAsync(path);
+
+        if (string.IsNullOrEmpty(result))
+            return;
+
+        result = result.ToLower();
+        Debug.Log("[VOICE] Heard: " + result);
+
+        // Any phrase containing "jump" triggers one RL decision
+        if (result.Contains("jump"))
+        {
+            Debug.Log("[VOICE] Triggering RL decision...");
+            rlAgent.RequestDecision();
+        }
     }
 }

@@ -13,18 +13,17 @@ namespace EndlessRunner.Player
         private IEventManager eventManager;
         private GameState currentGameState;
 
-        private PlayerController player1;
-        private PlayerControllerVoice player2;
-        private PlayerControllerVoiceMB player2MB;
+        private PlayerController player1;            // Manual runner
+        private PlayerControllerVoice player2;       // Voice/RL runner
+        private PlayerControllerVoiceMB player2MB;   // MonoBehaviour wrapper
 
         private int currentScore;
         private int highScore;
 
-        private string ScoreFilePath => Path.Combine(Application.persistentDataPath, "scoreData.json");
+        private string ScoreFilePath =>
+            Path.Combine(Application.persistentDataPath, "scoreData.json");
 
-        public PlayerControllerVoice VoicePlayer => player2;
         public PlayerControllerVoiceMB VoicePlayerMB => player2MB;
-
         public GameState CurrentGameState => currentGameState;
 
         public void InitializeManager(IEventManager eventManager)
@@ -58,41 +57,35 @@ namespace EndlessRunner.Player
 
         private void Update()
         {
-            if (currentGameState == GameState.IN_GAME)
-            {
-                player1?.OnUpdate(Time.deltaTime);
-                player2?.OnUpdate(Time.deltaTime);
-            }
+            if (currentGameState != GameState.IN_GAME)
+                return;
+
+            player1?.OnUpdate(Time.deltaTime);
+            player2?.OnUpdate(Time.deltaTime);
         }
 
         private void OnGameStart()
         {
+            // --- PLAYER 1 (manual) ---
             if (player1 == null)
             {
                 player1 = new PlayerController(playerData, this);
                 player1.InitializeController();
             }
 
-            // inside OnGameStart()
-if (player2 == null)
-{
-    player2 = new PlayerControllerVoice(playerData, this);
-    player2.InitializeController();
-
-    var view = player2.GetView();
-    var mb = view.gameObject.AddComponent<PlayerControllerVoiceMB>();
-    mb.Init(player2, view);
-
-    var rl = Object.FindAnyObjectByType<VoiceRLAgent>();
-    if (rl != null)
-        rl.voiceWrapper = mb;
-}
-
+            // --- PLAYER 2 (voice + RL, inference-only) ---
+            if (player2 == null)
+            {
+                player2 = new PlayerControllerVoice(playerData, this);
+                player2.InitializeController();
+                player2MB = player2.voiceMB;
+            }
         }
 
         private void OnObstacleAvoided(int scoreValue)
         {
             player1?.OnObstacleAvoided(scoreValue);
+            // You can forward to player2 as well if you want separate scoring
         }
 
         public void OnScoreUpdated(int newScore)
@@ -103,6 +96,7 @@ if (player2 == null)
 
         public void OnHitByObstacle()
         {
+            // Both players use this same game-over pipeline
             eventManager.PlayerEvents.OnHitByObstacle.Invoke();
         }
 
@@ -124,7 +118,10 @@ if (player2 == null)
             if (currentScore > highScore)
             {
                 highScore = currentScore;
-                File.WriteAllText(ScoreFilePath, JsonUtility.ToJson(new PlayerScoreData { highScore = highScore }));
+                File.WriteAllText(
+                    ScoreFilePath,
+                    JsonUtility.ToJson(new PlayerScoreData { highScore = highScore })
+                );
             }
         }
 
@@ -132,9 +129,15 @@ if (player2 == null)
         {
             if (File.Exists(ScoreFilePath))
             {
-                highScore = JsonUtility.FromJson<PlayerScoreData>(File.ReadAllText(ScoreFilePath)).highScore;
+                var data = JsonUtility.FromJson<PlayerScoreData>(
+                    File.ReadAllText(ScoreFilePath)
+                );
+                highScore = data.highScore;
             }
-            else highScore = 0;
+            else
+            {
+                highScore = 0;
+            }
         }
     }
 }

@@ -1,9 +1,10 @@
 using UnityEngine;
 using EndlessRunner.Data;
+using EndlessRunner.Common;
 
 namespace EndlessRunner.Player
 {
-    public class PlayerView : MonoBehaviour
+    public class PlayerView : MonoBehaviour, IPlayer
     {
         [SerializeField] private Rigidbody2D playerRB;
         [SerializeField] private Transform feetPosition;
@@ -12,7 +13,7 @@ namespace EndlessRunner.Player
         private LayerMask groundLayer;
         private float groundDistance;
 
-        private bool jumpRequested = false;
+        private bool jumpRequested;
         private float jumpForce;
 
         public void InitializeView(PlayerData data, PlayerController ctrl)
@@ -25,7 +26,11 @@ namespace EndlessRunner.Player
 
         public bool CheckIfGrounded()
         {
-            return Physics2D.OverlapCircle(feetPosition.position, groundDistance, groundLayer);
+            return Physics2D.OverlapCircle(
+                feetPosition.position,
+                groundDistance,
+                groundLayer
+            );
         }
 
         public void RequestJump(float force)
@@ -36,11 +41,14 @@ namespace EndlessRunner.Player
 
         private void FixedUpdate()
         {
-            if (jumpRequested)
-            {
-                playerRB.linearVelocity = new Vector2(playerRB.linearVelocity.x, jumpForce);
-                jumpRequested = false;
-            }
+            if (!jumpRequested)
+                return;
+
+            // Use impulse (option A)
+            playerRB.linearVelocity = new Vector2(playerRB.linearVelocity.x, 0f);
+            playerRB.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+
+            jumpRequested = false;
         }
 
         public void ResetPhysicsState()
@@ -49,8 +57,15 @@ namespace EndlessRunner.Player
             playerRB.angularVelocity = 0f;
         }
 
+        // IPlayer implementation - used by ObstacleView
         public void OnHitByObstacle()
         {
+            if (controller == null)
+            {
+                Debug.LogError("[PlayerView] Controller is NULL on hit!");
+                return;
+            }
+
             controller.OnHitByObstacle();
         }
     }

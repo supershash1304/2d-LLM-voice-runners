@@ -10,30 +10,42 @@ namespace EndlessRunner.Player
         public PlayerControllerVoiceMB voiceWrapper;
 
         private float distToObstacle;
-        private float playerHeight;
+        private float height;
         private bool grounded;
 
-        public void SetEnvironment(float dist, float height, bool g)
+        public void SetEnvironment(float dist, float h, bool g)
         {
             distToObstacle = dist;
-            playerHeight = height;
+            height = h;
             grounded = g;
         }
 
         public override void CollectObservations(VectorSensor sensor)
         {
             sensor.AddObservation(distToObstacle);
-            sensor.AddObservation(playerHeight);
+            sensor.AddObservation(height);
             sensor.AddObservation(grounded ? 1f : 0f);
         }
 
         public override void OnActionReceived(ActionBuffers actions)
         {
-            if (voiceWrapper == null)
-                return;
+            float act = actions.ContinuousActions[0];
 
-            float jump = Mathf.Clamp01(actions.ContinuousActions[0]);
-            voiceWrapper.TriggerJump(jump);
+            Debug.Log($"[RL] ActionReceived. act={act}, grounded={grounded}, wrapper={(voiceWrapper != null)}");
+
+            if (voiceWrapper == null)
+            {
+                Debug.LogWarning("[RL] voiceWrapper is NULL — cannot jump!");
+                return;
+            }
+
+            // 🔥 ALWAYS jump if grounded (voice-triggered RL only)
+            if (grounded)
+            {
+                float jumpStrength = Mathf.Clamp01(act);
+                Debug.Log("[RL] Triggering jump! strength=" + jumpStrength);
+                voiceWrapper.TriggerJump(jumpStrength);
+            }
         }
 
         public override void OnEpisodeBegin()
@@ -41,10 +53,10 @@ namespace EndlessRunner.Player
             voiceWrapper?.ResetForRLTraining();
         }
 
-        // 🚫 NO SPACE INPUT ALLOWED
         public override void Heuristic(in ActionBuffers actionsOut)
         {
-            // Leave empty! RL decides everything.
+            var c = actionsOut.ContinuousActions;
+            c[0] = 0f;
         }
     }
 }

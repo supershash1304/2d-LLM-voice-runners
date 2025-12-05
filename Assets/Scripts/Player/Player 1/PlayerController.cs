@@ -20,7 +20,13 @@ namespace EndlessRunner.Player
         public virtual void InitializeController()
         {
             model = new PlayerModel(playerData, this);
-            view = Object.Instantiate(playerData.Player1Prefab, playerData.Player1SpawnPosition, Quaternion.identity);
+
+            view = Object.Instantiate(
+                playerData.Player1Prefab,
+                playerData.Player1SpawnPosition,
+                Quaternion.identity
+            );
+
             view.InitializeView(playerData, this);
             model.InitializeModel();
         }
@@ -42,7 +48,6 @@ namespace EndlessRunner.Player
             manager.OnScoreUpdated(model.GetScore());
         }
 
-        // 🔥 MUST BE VIRTUAL
         public virtual void OnHitByObstacle()
         {
             manager.OnHitByObstacle();
