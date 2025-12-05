@@ -16,8 +16,8 @@ MonoBehaviour:
   obstacleSprites:
   - {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   spawnPositions:
-  - {x: 16, y: -2, z: 0}
   - {x: 16, y: -4, z: 0}
-  obstacleSpawnTime: 2
+  - {x: 16, y: -2, z: 0}
+  obstacleSpawnTime: 3
   moveSpeed: 4
   scoreValue: 1

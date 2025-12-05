@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player1Prefab: {fileID: 6565478153324689521, guid: 33e9e94d58de048ce88a9ebe12303780, type: 3}
   player2Prefab: {fileID: 2850192529637296097, guid: 60c62aa04114c4143a5a36eab2bfafff, type: 3}
-  player1SpawnPosition: {x: -6.7, y: -2.5, z: 0}
-  player2SpawnPosition: {x: -4.77, y: -2.5, z: 0}
-  jumpForce: 15
-  groundDistance: 0.25
+  player1SpawnPosition: {x: 3, y: -1.5, z: 0}
+  player2SpawnPosition: {x: -6.7, y: -1.5, z: 0}
+  jumpForce: 40
+  groundDistance: 1
   jumpTime: 1
   groundLayer:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 64
   gravityScale: 10

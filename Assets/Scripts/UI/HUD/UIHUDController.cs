@@ -23,6 +23,17 @@ namespace EndlessRunner.UI
         {
             uiHUD = GameObject.Instantiate<UIHUD>(uiData.UIHUDPrefab, uiCanvas.transform);
         }
+        public void QuitGame()
+        {
+            Debug.Log("[UI] Quit pressed");
+
+            Application.Quit();
+
+        #if UNITY_EDITOR
+         UnityEditor.EditorApplication.isPlaying = false;
+        #endif
+        }
+
 
         public void ShowUI() => uiHUD.ShowUI();
         public void HideUI() => uiHUD.HideUI();

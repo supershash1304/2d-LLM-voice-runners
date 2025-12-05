@@ -2,7 +2,6 @@ using EndlessRunner.Common;
 using EndlessRunner.Data;
 using EndlessRunner.Event;
 using UnityEngine;
-using System.Collections.Generic;
 
 namespace EndlessRunner.UI
 {
@@ -19,13 +18,11 @@ namespace EndlessRunner.UI
 
         public void InitializeManager(IEventManager eventManager)
         {
-            SetManagerDependencies(eventManager);
+            this.eventManager = eventManager;
             CreateControllers();
             InitializeControllers();
             RegisterEventListeners();
         }
-
-        private void SetManagerDependencies(IEventManager eventManager) => this.eventManager = eventManager;              
 
         private void CreateControllers()
         {
@@ -46,13 +43,15 @@ namespace EndlessRunner.UI
             eventManager.GameEvents.OnGameStateUpdated.AddListener(OnGameStateUpdated);
             eventManager.PlayerEvents.OnScoreUpdated.AddListener(OnScoreUpdated);
             eventManager.PlayerEvents.OnGameover.AddListener(OnGameOver);
+
+            // REGISTER QUIT EVENT HERE
+            eventManager.UIEvents.OnQuitButtonClicked.AddListener(QuitGame);
         }
 
-        private void OnGameStateUpdated(GameState currentGameState)
+        private void OnGameStateUpdated(GameState state)
         {
             HideAllUIs();
-
-            switch (currentGameState)
+            switch (state)
             {
                 case GameState.MAIN_MENU:
                     uiMainMenuController.ShowUI();
@@ -61,7 +60,7 @@ namespace EndlessRunner.UI
                     uiHUDController.ShowUI();
                     break;
                 case GameState.GAME_OVER:
-                    uiGameOverMenuController?.ShowUI();
+                    uiGameOverMenuController.ShowUI();
                     break;
             }
         }
@@ -73,33 +72,31 @@ namespace EndlessRunner.UI
             uiGameOverMenuController?.HideUI();
         }
 
-        public void OnStartButtonClicked() => eventManager.UIEvents.OnStartButtonClicked.Invoke();
+        // BUTTON HOOKS
+        public void OnStartButtonClicked() =>
+            eventManager.UIEvents.OnStartButtonClicked.Invoke();
 
-        public void OnScoreUpdated(int playerScore) => uiHUDController.OnScoreUpdated(playerScore);
+        public void OnRestartGame() =>
+            eventManager.UIEvents.OnRestartButtonClicked.Invoke();
 
-        private void OnGameOver(int finalScore, int highScore)
+        public void OnQuitGame() =>
+            eventManager.UIEvents.OnQuitButtonClicked.Invoke(); // FIXED
+
+        private void QuitGame()
         {
-            uiGameOverMenuController.OnGameOver(finalScore, highScore);
+            Debug.Log("[UI] QUIT GAME REQUESTED");
+
+            Application.Quit();
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
         }
 
+        private void OnScoreUpdated(int score) =>
+            uiHUDController.OnScoreUpdated(score);
 
-
-        public void OnRestartGame() => eventManager.UIEvents.OnStartButtonClicked.Invoke();
-        public void OnQuitGame() => Debug.Log("Quit");
+        private void OnGameOver(int finalScore, int highScore) =>
+            uiGameOverMenuController.OnGameOver(finalScore, highScore);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
