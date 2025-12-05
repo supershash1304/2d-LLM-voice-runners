@@ -24,23 +24,26 @@ namespace EndlessRunner.Player
         }
 
         // 🔥 CALLED BY RL AGENT
-        public void TriggerJump(float multiplier)
-        {
-            Debug.Log($"[MB] TriggerJump called! multiplier={multiplier}");
+       public void TriggerJump(float multiplier)
+{
+    Debug.Log($"[MB] TriggerJump! multiplier={multiplier}");
 
-            if (!View.CheckIfGrounded())
-            {
-                Debug.Log("[MB] Not grounded, cannot jump.");
-                return;
-            }
+    if (!View.CheckIfGrounded())
+    {
+        Debug.Log("[MB] Not grounded — no jump.");
+        return;
+    }
 
-            float finalForce = baseJumpForce * Mathf.Clamp(multiplier, minMultiplier, maxMultiplier);
+    multiplier = Mathf.Clamp(multiplier, minMultiplier, maxMultiplier);
 
-            Debug.Log("[MB] Applying jump force: " + finalForce);
+    float finalForce = baseJumpForce * multiplier * 3.5f; // BOOST multiplier
 
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-            rb.AddForce(Vector2.up * finalForce, ForceMode2D.Impulse);
-        }
+    Debug.Log("[MB] Applying velocity jump: " + finalForce);
+
+    // Same jump method as Player1
+    rb.linearVelocity = new Vector2(rb.linearVelocity.x, finalForce);
+}
+
 
         public void ResetForRLTraining()
         {

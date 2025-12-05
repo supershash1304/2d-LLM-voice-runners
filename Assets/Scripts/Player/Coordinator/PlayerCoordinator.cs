@@ -78,7 +78,7 @@ namespace EndlessRunner.Player
             {
                 player2 = new PlayerControllerVoice(playerData, this);
                 player2.InitializeController();
-                player2MB = player2.voiceMB;
+                player2MB = player2.VoiceMB;
             }
         }
 
