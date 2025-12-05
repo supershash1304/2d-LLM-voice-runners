@@ -13,9 +13,6 @@ public class MicrophoneCapture : MonoBehaviour
         StartContinuousMic();
     }
 
-    // ---------------------------------------------------------
-    // START CONTINUOUS MICROPHONE (ROLLING BUFFER)
-    // ---------------------------------------------------------
     public void StartContinuousMic()
     {
         if (Microphone.IsRecording(device))
@@ -25,9 +22,6 @@ public class MicrophoneCapture : MonoBehaviour
         micClip = Microphone.Start(device, true, 5, sampleRate);
     }
 
-    // ---------------------------------------------------------
-    // GET LAST 2 SECONDS OF AUDIO
-    // ---------------------------------------------------------
     public AudioClip GetLastSecondClip()
     {
         if (micClip == null)
@@ -37,34 +31,29 @@ public class MicrophoneCapture : MonoBehaviour
         if (micPosition <= 0)
             return null;
 
-        int samplesToRead = sampleRate * 2;  // 2 seconds
+        int samplesToRead = sampleRate * 1;
         float[] allSamples = new float[micClip.samples];
         micClip.GetData(allSamples, 0);
 
         float[] segment = new float[samplesToRead];
-
         int startPos = Mathf.Clamp(micPosition - samplesToRead, 0, allSamples.Length - 1);
 
         for (int i = 0; i < samplesToRead && startPos + i < allSamples.Length; i++)
             segment[i] = allSamples[startPos + i];
 
-        // DEBUG: Volume Check
         float avg = 0f;
         for (int i = 0; i < segment.Length; i++)
             avg += Mathf.Abs(segment[i]);
         avg /= segment.Length;
+
         Debug.Log("[MIC] Volume=" + avg);
 
-        // Create mono clip
         AudioClip newClip = AudioClip.Create("micSegment", samplesToRead, 1, sampleRate, false);
         newClip.SetData(segment, 0);
 
         return newClip;
     }
 
-    // ---------------------------------------------------------
-    // SAVE AUDIOCLIP TO WAV FILE
-    // ---------------------------------------------------------
     public string SaveTempWav(AudioClip clip)
     {
         if (clip == null)
@@ -75,9 +64,6 @@ public class MicrophoneCapture : MonoBehaviour
         return path;
     }
 
-    // ---------------------------------------------------------
-    // WAV GENERATOR
-    // ---------------------------------------------------------
     void SaveWav(string path, AudioClip clip)
     {
         float[] samples = new float[clip.samples * clip.channels];
@@ -95,8 +81,8 @@ public class MicrophoneCapture : MonoBehaviour
             writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
             writer.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
             writer.Write(16);
-            writer.Write((short)1); 
-            writer.Write((short)1);  // mono
+            writer.Write((short)1);
+            writer.Write((short)1);
             writer.Write(sampleRate);
             writer.Write(sampleRate * 2);
             writer.Write((short)2);

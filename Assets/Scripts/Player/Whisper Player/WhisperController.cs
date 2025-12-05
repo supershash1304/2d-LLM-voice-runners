@@ -16,19 +16,17 @@ public class WhisperController : MonoBehaviour
 
     public async Task<string> TranscribeAsync(string filePath)
     {
-        Debug.Log("[WHISPER] Sending " + filePath);
+        Debug.Log("[WHISPER] Sending file: " + filePath);
 
         var request = new CreateAudioTranscriptionsRequest
-{
-    File = filePath,
-    Model = "whisper-1",
-    ResponseFormat = "json",
-
-    Prompt = "The user will only say: 'jump', 'short jump', 'medium jump', 'high jump'. " +
-             "Transcribe the audio strictly as one of these commands. " +
-             "If uncertain, output 'jump'."
-};
-
+        {
+            File = filePath,
+            Model = "whisper-1",
+            ResponseFormat = "json",
+            Prompt =
+                "The user will only say: 'jump', 'high jump', 'medium jump', 'short jump'. " +
+                "Transcribe strictly to one of these. If uncertain return 'jump'."
+        };
 
         try
         {

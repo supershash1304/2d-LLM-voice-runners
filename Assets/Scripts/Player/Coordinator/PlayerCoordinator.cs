@@ -13,18 +13,19 @@ namespace EndlessRunner.Player
         private IEventManager eventManager;
         private GameState currentGameState;
 
-        private PlayerController player1;            // Manual runner
-        private PlayerControllerVoice player2;       // Voice/RL runner
-        private PlayerControllerVoiceMB player2MB;   // MonoBehaviour wrapper
+        private PlayerController player1;
+        private PlayerControllerVoiceMB player2MB;
+        private VoiceRLAgent rlAgent;
 
         private int currentScore;
         private int highScore;
 
-        private string ScoreFilePath =>
-            Path.Combine(Application.persistentDataPath, "scoreData.json");
+        private string ScoreFilePath => Path.Combine(Application.persistentDataPath, "scoreData.json");
 
         public PlayerControllerVoiceMB VoicePlayerMB => player2MB;
         public GameState CurrentGameState => currentGameState;
+
+        // INITIALIZATION
 
         public void InitializeManager(IEventManager eventManager)
         {
@@ -38,6 +39,8 @@ namespace EndlessRunner.Player
             eventManager.GameEvents.OnGameStateUpdated.AddListener(OnGameStateUpdated);
             eventManager.ObstacleEvents.OnObstacleAvoided.AddListener(OnObstacleAvoided);
         }
+
+        // GAME STATE HANDLING
 
         private void OnGameStateUpdated(GameState newState)
         {
@@ -57,35 +60,74 @@ namespace EndlessRunner.Player
 
         private void Update()
         {
-            if (currentGameState != GameState.IN_GAME)
-                return;
-
-            player1?.OnUpdate(Time.deltaTime);
-            player2?.OnUpdate(Time.deltaTime);
+            if (currentGameState == GameState.IN_GAME)
+            {
+                player1?.OnUpdate(Time.deltaTime);
+            }
         }
 
-        private void OnGameStart()
+        // GAME START
+
+    private void OnGameStart()
         {
-            // --- PLAYER 1 (manual) ---
+            // ------- PLAYER 1 -------
             if (player1 == null)
             {
                 player1 = new PlayerController(playerData, this);
                 player1.InitializeController();
             }
 
-            // --- PLAYER 2 (voice + RL, inference-only) ---
-            if (player2 == null)
-            {
-                player2 = new PlayerControllerVoice(playerData, this);
-                player2.InitializeController();
-                player2MB = player2.VoiceMB;
-            }
-        }
+            // ------- PLAYER 2 (VOICE + RL) -------
+            // --- PLAYER 2 (VOICE + RL) ---
+        if (player2MB == null)
+        {
+    
+            var viewObj = Object.Instantiate(
+            playerData.Player2Prefab,
+            playerData.Player2SpawnPosition,
+            Quaternion.identity
+            );
 
+    
+    PlayerView pView = viewObj.GetComponent<PlayerView>();
+    if (pView == null)
+    {
+        Debug.LogError("Player2 prefab has NO PlayerView!");
+        return;
+    }
+
+   
+    pView.InitializeView(playerData, null);
+
+    
+    player2MB = viewObj.GetComponent<PlayerControllerVoiceMB>();
+    if (player2MB == null)
+    {
+        player2MB = viewObj.gameObject.AddComponent<PlayerControllerVoiceMB>();
+        Debug.LogWarning("[PlayerManager] Added missing PlayerControllerVoiceMB");
+    }
+
+    
+    player2MB.View = pView;
+
+   
+    rlAgent = viewObj.GetComponent<VoiceRLAgent>();
+    if (rlAgent == null)
+    {
+        rlAgent = viewObj.gameObject.AddComponent<VoiceRLAgent>();
+        Debug.Log("[PlayerManager] Added VoiceRLAgent");
+    }
+
+    
+    rlAgent.voiceWrapper = player2MB;
+}
+}
+
+
+        // SCORING + HIT EVENTS
         private void OnObstacleAvoided(int scoreValue)
         {
             player1?.OnObstacleAvoided(scoreValue);
-            // You can forward to player2 as well if you want separate scoring
         }
 
         public void OnScoreUpdated(int newScore)
@@ -96,23 +138,36 @@ namespace EndlessRunner.Player
 
         public void OnHitByObstacle()
         {
-            // Both players use this same game-over pipeline
             eventManager.PlayerEvents.OnHitByObstacle.Invoke();
         }
 
+        // GAME OVER
         public void OnGameOver()
         {
+            // Player1 destroyed
             player1?.OnGameOver();
-            player2?.OnGameOver();
-
             player1 = null;
-            player2 = null;
-            player2MB = null;
+
+            // Player2 destroyed
+            if (player2MB != null)
+            {
+                Destroy(player2MB.gameObject);
+                player2MB = null;
+            }
+
+            if (rlAgent != null)
+            {
+                Destroy(rlAgent.gameObject);
+                rlAgent = null;
+            }
 
             UpdateHighscore();
             eventManager.PlayerEvents.OnGameover.Invoke(currentScore, highScore);
         }
 
+
+
+        // HIGHSCORE SAVE/LOAD
         private void UpdateHighscore()
         {
             if (currentScore > highScore)
@@ -129,10 +184,9 @@ namespace EndlessRunner.Player
         {
             if (File.Exists(ScoreFilePath))
             {
-                var data = JsonUtility.FromJson<PlayerScoreData>(
+                highScore = JsonUtility.FromJson<PlayerScoreData>(
                     File.ReadAllText(ScoreFilePath)
-                );
-                highScore = data.highScore;
+                ).highScore;
             }
             else
             {

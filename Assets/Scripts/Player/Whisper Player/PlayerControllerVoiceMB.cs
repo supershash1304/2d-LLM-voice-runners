@@ -7,41 +7,46 @@ namespace EndlessRunner.Player
     [RequireComponent(typeof(PlayerView))]
     public class PlayerControllerVoiceMB : MonoBehaviour
     {
-        public PlayerView View { get; private set; }
+        public PlayerView View { get; set; }
 
         private Rigidbody2D rb;
         private Vector3 initialPosition;
 
-        public float baseJumpForce = 30f;
-        public float minMultiplier = 0.3f;
-        public float maxMultiplier = 1.8f;
+        public float baseJumpForce = 50f;
+        public float minMultiplier = 1f;
+        public float maxMultiplier = 3f;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
-            View = GetComponent<PlayerView>();
+
+            if (View == null)
+                View = GetComponent<PlayerView>();
+
             initialPosition = transform.position;
         }
 
-        // 🔥 CALLED BY RL AGENT
-       public void TriggerJump(float multiplier)
+        public void TriggerJump(float multiplier)
 {
-    Debug.Log($"[MB] TriggerJump! multiplier={multiplier}");
-
-    if (!View.CheckIfGrounded())
+    if (View == null)
     {
-        Debug.Log("[MB] Not grounded — no jump.");
+        Debug.LogWarning("[VoiceMB] View is NULL, cannot jump.");
         return;
     }
 
+    if (!View.CheckIfGrounded())
+        return;
+
     multiplier = Mathf.Clamp(multiplier, minMultiplier, maxMultiplier);
+    float finalForce = baseJumpForce * multiplier * 3f;
 
-    float finalForce = baseJumpForce * multiplier * 3.5f; // BOOST multiplier
+    Debug.Log($"[VoiceMB] TriggerJump multiplier={multiplier}, finalForce={finalForce}");
 
-    Debug.Log("[MB] Applying velocity jump: " + finalForce);
+    // RESET existing vertical velocity
+    rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
 
-    // Same jump method as Player1
-    rb.linearVelocity = new Vector2(rb.linearVelocity.x, finalForce);
+   
+    rb.AddForce(Vector2.up * finalForce, ForceMode2D.Impulse);
 }
 
 
@@ -53,8 +58,9 @@ namespace EndlessRunner.Player
 
         private void Update()
         {
-            var rl = FindAnyObjectByType<VoiceRLAgent>();
-            if (rl == null) return;
+            var rl = GetComponent<VoiceRLAgent>();
+            if (rl == null || View == null)
+                return;
 
             float dist = CalculateDistanceToNextObstacle();
             float height = transform.position.y;
@@ -68,7 +74,6 @@ namespace EndlessRunner.Player
             float nearest = float.MaxValue;
 
             var obstacles = FindObjectsByType<ObstacleView>(FindObjectsSortMode.None);
-
             foreach (var o in obstacles)
             {
                 float diff = o.transform.position.x - transform.position.x;

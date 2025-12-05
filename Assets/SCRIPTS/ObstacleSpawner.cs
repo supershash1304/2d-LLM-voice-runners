@@ -9,7 +9,7 @@ namespace EndlessRunner.Obstacle
         private ObstacleManager obstacleManager;
         private Coroutine spawnRoutine;
 
-        // RL support: track active obstacles
+        // RL : track active obstacles
         private readonly List<ObstacleController> activeObstacles = new List<ObstacleController>();
 
         public ObstacleSpawner(ObstacleManager obstacleManager)
@@ -65,7 +65,7 @@ namespace EndlessRunner.Obstacle
             }
         }
 
-        // Optional: distance to next obstacle (if you want to feed RL)
+        // Optional: distance to next obstacle 
         public float GetDistanceToNextObstacle(float playerX)
         {
             float closest = float.MaxValue;

@@ -7,27 +7,35 @@ public class WhisperVoiceCommands : MonoBehaviour
     public WhisperController whisper;
     public MicrophoneCapture mic;
 
-    public float interval = 1.0f;
+    public float interval = 0.3f;   
 
     private float timer;
+    private float lastJumpTime = 0f;
+
     private PlayerManager playerManager;
     private VoiceRLAgent rlAgent;
 
-    private void Start()
-    {
-        playerManager = FindAnyObjectByType<PlayerManager>();
+    private const float silenceThreshold = 0.02f;
 
-        if (playerManager == null)
-            Debug.LogWarning("[VOICE] No PlayerManager found in scene");
+    private void OnEnable()
+    {
+        playerManager = null;
+        rlAgent = null;
     }
 
     private void Update()
     {
         if (playerManager == null)
+            playerManager = FindAnyObjectByType<PlayerManager>();
+
+        if (playerManager == null)
             return;
 
         if (playerManager.CurrentGameState != GameState.IN_GAME)
             return;
+
+        if (rlAgent == null)
+            rlAgent = FindAnyObjectByType<VoiceRLAgent>();
 
         timer += Time.deltaTime;
         if (timer >= interval)
@@ -43,11 +51,8 @@ public class WhisperVoiceCommands : MonoBehaviour
             return;
 
         if (rlAgent == null)
-            rlAgent = FindAnyObjectByType<VoiceRLAgent>();
-
-        if (rlAgent == null)
         {
-            Debug.LogWarning("[VOICE] No VoiceRLAgent found");
+            Debug.LogWarning("[VOICE] RL Agent not found — waiting for spawn");
             return;
         }
 
@@ -64,7 +69,6 @@ public class WhisperVoiceCommands : MonoBehaviour
         result = result.ToLower();
         Debug.Log("[VOICE] Heard: " + result);
 
-        // Any phrase containing "jump" triggers one RL decision
         if (result.Contains("jump"))
         {
             Debug.Log("[VOICE] Triggering RL decision...");

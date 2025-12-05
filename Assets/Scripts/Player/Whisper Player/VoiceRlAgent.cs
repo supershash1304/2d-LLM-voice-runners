@@ -38,8 +38,6 @@ namespace EndlessRunner.Player
                 Debug.LogWarning("[RL] voiceWrapper is NULL — cannot jump!");
                 return;
             }
-
-            // 🔥 ALWAYS jump if grounded (voice-triggered RL only)
             if (grounded)
             {
                 float jumpStrength = Mathf.Clamp01(act);

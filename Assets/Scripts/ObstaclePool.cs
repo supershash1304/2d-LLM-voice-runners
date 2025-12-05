@@ -21,10 +21,7 @@ namespace EndlessRunner.Obstacle
 
         public void InitializePool()
         {
-            obstacleControllers = new ObjectPool<ObstacleController>(CreateController,
-                                                                     OnGetController,
-                                                                     OnReleaseController,
-                                                                     OnDestroyController);
+            obstacleControllers = new ObjectPool<ObstacleController>(CreateController, OnGetController,OnReleaseController,OnDestroyController);
         }
 
         private ObstacleController CreateController()

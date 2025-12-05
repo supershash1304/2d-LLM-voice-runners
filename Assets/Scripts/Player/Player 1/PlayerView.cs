@@ -43,8 +43,6 @@ namespace EndlessRunner.Player
         {
             if (!jumpRequested)
                 return;
-
-            // Use impulse (option A)
             playerRB.linearVelocity = new Vector2(playerRB.linearVelocity.x, 0f);
             playerRB.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
 
@@ -56,17 +54,22 @@ namespace EndlessRunner.Player
             playerRB.linearVelocity = Vector2.zero;
             playerRB.angularVelocity = 0f;
         }
+       public void OnHitByObstacle()
+{
+    if (controller == null)
+    {
+        // This is Player2 (voice / RL player)
+        Debug.Log("[PlayerView] Hit detected for RL Player — forwarding to PlayerManager");
 
-        // IPlayer implementation - used by ObstacleView
-        public void OnHitByObstacle()
-        {
-            if (controller == null)
-            {
-                Debug.LogError("[PlayerView] Controller is NULL on hit!");
-                return;
-            }
+        var manager = FindAnyObjectByType<EndlessRunner.Player.PlayerManager>();
+        if (manager != null)
+            manager.OnHitByObstacle();
 
-            controller.OnHitByObstacle();
-        }
+        return;
+    }
+
+    controller.OnHitByObstacle();
+}
+
     }
 }
